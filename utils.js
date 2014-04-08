@@ -2,6 +2,20 @@ var _ = require('underscore');
 var jwt = require('jwt-simple');
 var SECRET = process.env.SECRET || "foobar";
 
+var log = bunyan.createLogger({
+    name: 'wgaf',
+    streams: [
+	{
+            stream: process.stdout,
+            level: 'info'
+	},
+    ],
+    serializers: {
+	req: bunyan.stdSerializers.req,
+	res: bunyan.stdSerializers.res
+    }
+});
+
 function validateRequest(req, res, params) {
     var token = null, username = null;
     for (var i = 0; i < params.length; ++i) {
@@ -51,3 +65,4 @@ function authenticateRequest(req, res) {
 exports.validateRequest = validateRequest;
 exports.authenticateRequest = authenticateRequest;
 exports.SECRET = SECRET;
+exports.log = log;

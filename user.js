@@ -93,7 +93,8 @@ function follow(req, res, next) {
     if (!utils.authenticateRequest(req, res))
         return next();
     
-    usernames = new RegExp(username + '|' + req.params.target, 'i');
+    var usernames = new RegExp(req.params.username + '|' +
+                               req.params.target, 'i');
     m.User.find({username: usernames}, function(err, users) {
         if (err) {
             log.error(err);

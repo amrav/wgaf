@@ -3,11 +3,10 @@ var m = require('./mongoose');
 var utils = require('./utils');
 var log = require('bunyan').createLogger({'name': 'wgaf'});
 var jwt = require('jwt-simple');
-//TODO: Make this private
-var SECRET = "foobar";
+var SECRET = utils.SECRET;
 
 function new_(req, res, next) {
-    if (!utils.validateRequest(req, res, ['token', 'username', 'url', 'title'])) {
+    if (!utils.validateRequest(req, res, ['token', 'username', 'url', 'summary'])) {
         return next();
     }
 
@@ -26,7 +25,7 @@ function new_(req, res, next) {
         }
         var link = new m.Link({
             'url': req.params.url,
-            'title': req.params.title,
+            'summary': req.params.summary,
             'username': req.params.username
         });
         link.save(function(err, yell) {
@@ -35,7 +34,7 @@ function new_(req, res, next) {
                 res.send(500);
                 return next();
             }
-            log.info("Saved link: ", {url: link.url, title: link.title});
+            log.info("Saved link: ", {url: link.url, summary: link.summary});
             res.send(201);
             return next();
         });

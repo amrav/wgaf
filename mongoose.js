@@ -48,7 +48,8 @@ var User = mongoose.model('User', userSchema);
 
 var linkSchema = mongoose.Schema({
     url: {type: String, required: true},
-    title: {type: String, required: true},
+    title: {type: String},
+    summary: {type: String},
     time: {type: Date, default: Date.now, index: true},
     username: {type: String, required: true, index: true}
 });

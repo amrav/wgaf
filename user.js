@@ -3,8 +3,7 @@ var log = require('bunyan').createLogger({'name': 'wgaf'});
 var m = require('./mongoose');
 var utils = require('./utils.js');
 var jwt = require('jwt-simple');
-//TODO: Make this private
-var SECRET = "foobar";
+var SECRET = utils.SECRET;
 
 function new_(req, res, next) {
     if (!utils.validateRequest(req, res, ['username', 'email', 'password'])) 

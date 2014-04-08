@@ -1,6 +1,7 @@
 var _ = require('underscore');
 var jwt = require('jwt-simple');
 var SECRET = process.env.SECRET || "foobar";
+var bunyan = require('bunyan');
 
 var log = bunyan.createLogger({
     name: 'wgaf',

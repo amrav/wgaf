@@ -68,7 +68,7 @@ function sendLinks(cb) {
         var context = {links: [], user: user};
         utils.asyncForEach(user.following, addLinks, context, function() {
             log.info("links for " + user.username, context.links);
-            user.updated = Date.now;
+            user.updated = Date.now();
             user.save(function(err) {
                 if (err) {
                     log.error(err);

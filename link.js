@@ -53,6 +53,9 @@ function sendLinksTest(req, res, next) {
 
 function sendLinks(cb) {
     function addLinks(username, context, done) {
+        if (context.user.updated === null) {
+            context.user.updated = Date.create("1 day ago");
+        }
         m.Link.find({username: username, time: {$gte: context.user.updated}},
                     function(err, links) {
                         if (err) {

@@ -10,15 +10,20 @@ var server = restify.createServer({
 });
 
 server.pre(function (request, response, next) {
-    log.info({req: request});
+    var ip = request.headers['x-forwarded-for'] ||
+        request.connection.remoteAddress ||
+        request.socket.remoteAddress ||
+        request.connection.socket.remoteAddress;
+    log.info(request.method + " " + request.url + " from " + ip);
     return next();
 });
 
 server.pre(restify.pre.userAgentConnection());
 
 server.on('after', function(request, response, route) {
-    log.info({"Response body": response._body});
-    log.info({res: response});
+    if (response.header('Content-Type') === 'application/json')
+        log.info({"Response body": response._body});
+    log.info("Finish " + request.method + " " + request.url);
 });
 
 server.on('uncaughtException', function(request, response, route, error) {
@@ -32,9 +37,18 @@ server.use(restify.fullResponse());
 server.use(restify.bodyParser());
 
 server.use(function(request, response, next) {
+    if (!_.has(request, 'header') ||
+        !request.header('Content-Type').match('application/json') &&
+        !request.header('Content-Type').match('x-www-form-urlencoded'))
+        return next();
     if (_.has(request, 'params') && request.params !== null)
-        log.info({"Request params": request.params});
-    return next();
+        if (_.has(request.params, 'password')) {
+            var safeParams = _.omit(request.params, 'password');
+            safeParams.password = '**********';
+            log.info({"Request params": safeParams});
+        } else
+            log.info({"Request params": request.params});
+    return next();    
 });
 
 server.post('/users', user.new_);

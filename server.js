@@ -3,24 +3,7 @@ var _ = require('underscore');
 var bunyan = require('bunyan');
 var user = require('./user');
 var link = require('./link');
-
-/*
- * Set up logging
- */
-
-var log = bunyan.createLogger({
-    name: 'wgaf',
-    streams: [
-	{
-            stream: process.stdout,
-            level: 'info'
-	},
-    ],
-    serializers: {
-	req: bunyan.stdSerializers.req,
-	res: bunyan.stdSerializers.res
-    }
-});
+var log = require('./utils').log;
 
 var server = restify.createServer({
     name: "wgaf",
@@ -43,8 +26,6 @@ server.on('uncaughtException', function(request, response, route, error) {
     response.send(500);
     log.error("Couldn't serve %s %s", request.method, request.url);
 });
-
-/* ----- */
 
 server.use(restify.CORS());
 server.use(restify.fullResponse());

@@ -10,7 +10,9 @@
     "underscore": "1.6.x",
     "mongoose": "~3.8.8",
     "bcrypt": "~0.7.7",
-    "jwt-simple": "~0.2.0"
+    "jwt-simple": "~0.2.0",
+    "mandrill-api": "~1.0.39",
+    "nodemailer": "~0.6.2"
   },
   "engines": {
     "node": "0.10.x",

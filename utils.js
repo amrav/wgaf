@@ -1,6 +1,8 @@
 var _ = require('underscore');
 var jwt = require('jwt-simple');
 var SECRET = process.env.SECRET || "foobar";
+var API_URL = process.env.API_URL;
+var APP_URL = process.env.APP_URL;
 var bunyan = require('bunyan');
 
 var log = bunyan.createLogger({
@@ -67,3 +69,5 @@ exports.validateRequest = validateRequest;
 exports.authenticateRequest = authenticateRequest;
 exports.SECRET = SECRET;
 exports.log = log;
+exports.API_URL = API_URL;
+exports.APP_URL = APP_URL;

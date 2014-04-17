@@ -1,8 +1,9 @@
 var _ = require('underscore');
-var log = require('bunyan').createLogger({'name': 'wgaf'});
 var m = require('./mongoose');
 var utils = require('./utils.js');
+var log = utils.log;
 var jwt = require('jwt-simple');
+var mail = require('./mail');
 var SECRET = utils.SECRET;
 
 function new_(req, res, next) {
@@ -10,7 +11,8 @@ function new_(req, res, next) {
 	return next();
     var user = new m.User({'username': req.params.username,
                            'email': req.params.email,
-                           'password': req.params.password});
+                           'password': req.params.password,
+                           'verified': false});
     user.save(function(err, user) {
 	if (err && err.code === m.UNIQUE_KEY_ERROR) {
             res.send(403, {"code": "UserExists", "message": "username/email already exists"});
@@ -23,6 +25,9 @@ function new_(req, res, next) {
             log.info({username: user.username}, "New user created");
             var token = jwt.encode({username: user.username}, SECRET);
             res.send(201, {token: token});
+            mail.verify(user.username, user.email, function() {
+                log.info("Sent verification email to " + user.email);
+            });
 	}
         next();
     });
@@ -33,7 +38,8 @@ function login(req, res, next) {
     if (!utils.validateRequest(req, res, ['username', 'password'])) 
 	return next();
     
-    m.User.findOne({username: req.params.username}, function(err, user) {
+    m.User.findOne({username: req.params.username}, "username password verified",
+                   function(err, user) {
 	if (err) {
             res.send(500);
             log.error(err);
@@ -50,6 +56,10 @@ function login(req, res, next) {
                 return next();
             }
             if (match) {
+                if (_.has(user, 'verified') && !user.verified) {
+                    res.send(401, {"message": "user not verified"});
+                    return next();
+                }
                 log.info({username: user.username}, "User signed in");
                 var token = jwt.encode({username: user.username}, SECRET);
                 res.send(200, {token: token});
@@ -136,7 +146,37 @@ function follow(req, res, next) {
     });
 }
 
+function verify(req, res, next) {
+    if (!utils.validateRequest(req, res, ['username', 'verify']))
+        return next();
+    var token;
+    try {
+        token = jwt.decode(req.params.verify, utils.SECRET);
+    } catch (err) {
+        log.info(err);
+        res.send(401);
+        return next();
+    }
+    if (token.username !== req.params.username || token.type !== 'verify') {
+        res.send(401);
+        return next();
+    }
+    m.User.update({username: req.params.username}, {verified: true},
+                  function(err, users) {
+                      if (err) {
+                          log.error(err);
+                          res.send(500);
+                          return next();
+                      }
+                      log.info("Verified email: " + req.params.username);
+                      res.header('Location', utils.APP_URL);
+                      res.send(302);
+                      return next(false);
+                  });
+}
+
 exports.new_ = new_;
 exports.del = del;
 exports.follow = follow;
 exports.login = login;
+exports.verify = verify;

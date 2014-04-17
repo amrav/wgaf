@@ -1,7 +1,8 @@
 var mongoose = require('mongoose');
-var log = require('bunyan').createLogger({name: 'wgaf'});
 var bcrypt = require('bcrypt');
 var SALT_WORK_FACTOR = 10;
+var utils = require('./utils');
+var log = utils.log;
 
 exports.UNIQUE_KEY_ERROR = 11000;
 
@@ -17,7 +18,8 @@ var userSchema = mongoose.Schema({
     following: [String],
     followers: [String],
     updated: {type: Date, default: Date.now},
-    password: {type: String, required: true}
+    password: {type: String, required: true},
+    verified: {type: Boolean, default: false}
 });
 
 userSchema.pre('save', function(next) {
@@ -38,6 +40,7 @@ userSchema.pre('save', function(next) {
 });
 
 userSchema.methods.comparePassword = function(candidate, cb) {
+    log.info('Comparing ' + candidate + ' and ' + this.password);
     bcrypt.compare(candidate, this.password, function(err, isMatch) {
         if (err) return cb(err);
         cb(null, isMatch);

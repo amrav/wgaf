@@ -4,6 +4,7 @@ var utils = require('./utils');
 var log = require('bunyan').createLogger({'name': 'wgaf'});
 var jwt = require('jwt-simple');
 var SECRET = utils.SECRET;
+var mail = require('./mail');
 
 function new_(req, res, next) {
     if (!utils.validateRequest(req, res, ['token', 'username', 'url', 'summary'])) {
@@ -42,7 +43,7 @@ function new_(req, res, next) {
 }
 
 function sendLinksTest(req, res, next) {
-    sendLinks2(function() {
+    sendLinks(function() {
         log.info("Links sent!");
         res.send(200);
         next();
@@ -50,41 +51,36 @@ function sendLinksTest(req, res, next) {
 }
 
 function sendLinks(cb) {
-    function addLinks(username, index, following) {
-        var allLinks = this.links;
-        var done = this.done;
-        var cb = this.cb;
-        m.Link.find({'username': username}, function(err, links) {
-            if (err) {
-                log.error(err);
-                return;
-            }
-            allLinks.push(links);
-            done += 1;
-            if (done === following.length)
-                cb();
+    function addLinks(username, context, done) {
+        m.Link.find({username: username, time: {$gte: context.user.updated}},
+                    function(err, links) {
+                        if (err) {
+                            log.error(err);
+                            return;
+                        }
+                        context.links = context.links.concat(links);
+                        done();
+                    });
+    }
+    function email(user, done) {
+        log.info("constructing email for " + user.username);
+        var context = {links: [], user: user};
+        utils.asyncForEach(user.following, addLinks, context, function() {
+            log.info("links for " + user.username, context.links);
+            user.updated = Date.now;
+            user.save(function() {
+                log.info("Saved follower last updated: " + user.username); 
+            });
+            if (context.links.length === 0)
+                return done();
+            mail.sendLinks(user.username, context.links, user.email, done);
         });
     }
-    function email(user, index, users) {
-        log.info("constructing email for " + user.username);
-        callback = this.cb;
-        var context = {links: [], done: 0, cb: function () {
-            log.info("links for " + user.username, context.links);
-            callback();
-        }};
-        if (user.following.length === 0)
-            return context.cb();
-        _.each(user.following, addLinks, context);
-    }
-    m.User.find({}, 'username following email', function(err, users) {
-        var context = {done: 0, cb: function() {
-            context.done += 1;
-            if (context.done === users.length)
-                cb();
-        }};
-        if (users.length === 0)
-            return cb();
-        _.each(users, email, context);
+    m.User.find({}, 'username following email updated', function(err, users) {
+        utils.asyncForEach(users, email, function() {
+            log.info("Finished mailing users");
+            cb();
+        });
     });
 }
 

@@ -17,7 +17,7 @@ var userSchema = mongoose.Schema({
     email: {type: String, required: true},
     following: [String],
     followers: [String],
-    updated: {type: Date, default: Date.now},
+    updated: {type: Date, default: Date.now, required: true},
     password: {type: String, required: true},
     verified: {type: Boolean, default: false}
 });
@@ -53,7 +53,7 @@ var linkSchema = mongoose.Schema({
     url: {type: String, required: true},
     title: {type: String},
     summary: {type: String},
-    time: {type: Date, default: Date.now, index: true},
+    time: {type: Date, default: Date.now, index: true, required: true},
     username: {type: String, required: true, index: true}
 });
 

@@ -33,7 +33,7 @@ function mail(email, subject, body, cb) {
 }
 
 function verify(username, email, cb) {
-    log.info("Sending verification email");
+    log.info("mail.js: Sending verification email");
     var token = jwt.encode({username: username, type: 'verify'}, utils.SECRET);
     var verifyUrl = utils.API_URL + '/users/' + username + '/verify/' + token;
     var body = '<p>Welcome to WGAF. Please verify your email by going to this link:<br /><a href="' + verifyUrl + '">' + verifyUrl + '</a></p>';
@@ -41,5 +41,22 @@ function verify(username, email, cb) {
     mail(email, "Verify your email", body, cb);
 }
 
+function sendLinks(username, links, email, cb) {
+    log.info("mail.js: Sending links to " + email);
+    var body = "<p>Hi " + username + ". Here are today's links.</p>";
+    body += "<ol>";
+    for (var i = 0; i < links.length; i++) {
+        body += '<li><a href="' + links[i].url + '">' +
+            (links[i].title || links[i].url) + '</a>' +
+            ' - <b>' + links[i].username + '</b>' +
+            (links[i].summary &&
+             (', <i>' + links[i].summary + '</i></li>') ||
+             '');
+    }
+    body += '</ol>';
+    mail(email, "Daily Digest", body, cb);
+}
+
 exports.mail = mail;
 exports.verify = verify;
+exports.sendLinks = sendLinks;

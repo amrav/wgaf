@@ -65,9 +65,32 @@ function authenticateRequest(req, res) {
     return true;
 }
 
+function asyncForEach(list, func, context, callback) {
+    if (typeof context === 'function') {
+        callback = context;
+        context = undefined;
+    }
+    if (list.length === 0)
+        return callback();
+    var done = 0;
+    function doneOne() {
+        done += 1;
+        if (done === list.length) {
+            callback();
+        }
+    }
+    for (var i = 0; i < list.length; i++) {
+        if (!context)
+            func(list[i], doneOne);
+        else
+            func(list[i], context, doneOne);
+    }
+}
+
 exports.validateRequest = validateRequest;
 exports.authenticateRequest = authenticateRequest;
 exports.SECRET = SECRET;
 exports.log = log;
 exports.API_URL = API_URL;
 exports.APP_URL = APP_URL;
+exports.asyncForEach = asyncForEach;

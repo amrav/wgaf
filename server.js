@@ -62,7 +62,7 @@ server.post('/users/:username/sessions', user.login);
 server.post('/users/:username/following', user.follow);
 server.get('/users/:username/verify/:verify', user.verify);
 server.post('/users/:username/links', link.new_);
-server.post('/send_links', link.sendLinksTest);
+//server.post('/send_links', link.sendLinksTest);
 
 var port = Number(process.env.PORT || 7777);
 server.listen(port, function() {

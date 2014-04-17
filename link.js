@@ -68,15 +68,23 @@ function sendLinks(cb) {
         utils.asyncForEach(user.following, addLinks, context, function() {
             log.info("links for " + user.username, context.links);
             user.updated = Date.now;
-            user.save(function() {
-                log.info("Saved follower last updated: " + user.username); 
+            user.save(function(err) {
+                if (err) {
+                    log.error(err);
+                    return;
+                }
+                log.info("Saved follower last updated: " + user.username);
+                if (context.links.length === 0)
+                    return done();
+                mail.sendLinks(user.username, context.links, user.email, done);
             });
-            if (context.links.length === 0)
-                return done();
-            mail.sendLinks(user.username, context.links, user.email, done);
         });
     }
     m.User.find({}, 'username following email updated', function(err, users) {
+        if (err) {
+            log.error(err);
+            return;
+        }
         utils.asyncForEach(users, email, function() {
             log.info("Finished mailing users");
             cb();

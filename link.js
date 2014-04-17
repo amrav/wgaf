@@ -81,7 +81,7 @@ function sendLinks(cb) {
             });
         });
     }
-    m.User.find({}, 'username following email updated', function(err, users) {
+    m.User.find({verified: true}, 'username following email updated', function(err, users) {
         if (err) {
             log.error(err);
             return;

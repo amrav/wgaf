@@ -103,47 +103,47 @@ function follow(req, res, next) {
     if (!utils.authenticateRequest(req, res))
         return next();
     
-    var usernames = new RegExp(req.params.username + '|' +
-                               req.params.target, 'i');
-    m.User.find({username: usernames}, function(err, users) {
-        if (err) {
-            log.error(err);
-            res.send(500);
-            return next();
-        }
-        if (users.length !== 2) {
-            res.send(404, {"code": "NoUserFound", "message": "no such user exists"});
-            return next();
-        }
-        var follower, followed;
-        if (users[0].username === req.params.username) {
-            follower = users[0];
-            followed = users[1];
-        } else {
-            follower = users[1];
-            followed = users[0];
-        }
-        follower.following.push(followed.username);
-        followed.followers.push(follower.username);
-        follower.save(function(err, yell) {
-            if (err) {
-                log.error(err);
-                res.send(500);
-                return next();
-            }
-            log.info("Saved follower: ", follower);
-            followed.save(function(err, yell) {
-                if (err) {
-                    log.error(err);
-                    res.send(500);
-                    return next();
-                }
-                log.info("Saved followed: ", followed);
-                res.send(201);
-                return next();
-            });
-        });
-    });
+    m.User.find({username: {$in: [req.params.username, req.params.target]}},
+                function(err, users) {
+                    if (err) {
+                        log.error(err);
+                        res.send(500);
+                        return next();
+                    }
+                    if (users.length !== 2) {
+                        res.send(404, {"code": "NoUserFound",
+                                       "message": "no such user exists"});
+                        return next();
+                    }
+                    var follower, followed;
+                    if (users[0].username === req.params.username) {
+                        follower = users[0];
+                        followed = users[1];
+                    } else {
+                        follower = users[1];
+                        followed = users[0];
+                    }
+                    follower.following.push(followed.username);
+                    followed.followers.push(follower.username);
+                    follower.save(function(err, yell) {
+                        if (err) {
+                            log.error(err);
+                            res.send(500);
+                            return next();
+                        }
+                        log.info("Saved follower: ", follower);
+                        followed.save(function(err, yell) {
+                            if (err) {
+                                log.error(err);
+                                res.send(500);
+                                return next();
+                            }
+                            log.info("Saved followed: ", followed);
+                            res.send(201);
+                            return next();
+                        });
+                    });
+                });
 }
 
 function verify(req, res, next) {

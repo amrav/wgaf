@@ -5,6 +5,7 @@ var log = require('bunyan').createLogger({'name': 'wgaf'});
 var jwt = require('jwt-simple');
 var SECRET = utils.SECRET;
 var mail = require('./mail');
+require('sugar');
 
 function new_(req, res, next) {
     if (!utils.validateRequest(req, res, ['token', 'username', 'url', 'summary'])) {
@@ -87,10 +88,23 @@ function sendLinks(cb) {
         }
         utils.asyncForEach(users, email, function() {
             log.info("Finished mailing users");
-            cb();
+            if (typeof cb === 'function')
+                cb();
         });
     });
 }
+
+(function () {
+    function runUpdate() {
+        var ms = Date.create('18:00+0530') - Date.now();
+        if (ms > 0) {
+            setTimeout(function() {
+                sendLinks(runUpdate);
+            }, ms);
+        }
+    }
+    runUpdate();
+})();
 
 exports.new_ = new_;
 exports.sendLinksTest = sendLinksTest;

@@ -1,3 +1,10 @@
+if(process.env.NODETIME_ACCOUNT_KEY) {
+  require('nodetime').profile({
+    accountKey: process.env.NODETIME_ACCOUNT_KEY,
+    appName: process.env.APP_NAME
+  });
+}
+
 var restify = require('restify');
 var _ = require('underscore');
 var bunyan = require('bunyan');

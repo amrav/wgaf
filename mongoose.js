@@ -17,7 +17,7 @@ var userSchema = mongoose.Schema({
     email: {type: String, required: true},
     following: [String],
     followers: [String],
-    updated: {type: Date, default: null, required: true},
+    updated: {type: Date, required: true},
     password: {type: String, required: true},
     verified: {type: Boolean, default: false, required: true}
 });

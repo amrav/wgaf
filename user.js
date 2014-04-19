@@ -4,6 +4,7 @@ var utils = require('./utils.js');
 var log = utils.log;
 var jwt = require('jwt-simple');
 var mail = require('./mail');
+require('sugar');
 var SECRET = utils.SECRET;
 
 function new_(req, res, next) {
@@ -12,7 +13,8 @@ function new_(req, res, next) {
     var user = new m.User({'username': req.params.username,
                            'email': req.params.email,
                            'password': req.params.password,
-                           'verified': false});
+                           'verified': false,
+                           'updated': Date.create("1 day ago")});
     user.save(function(err, user) {
 	if (err && err.code === m.UNIQUE_KEY_ERROR) {
             res.send(403, {"code": "UserExists", "message": "username/email already exists"});

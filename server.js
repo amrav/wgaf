@@ -65,6 +65,7 @@ server.post('/users/:username/following', user.follow);
 server.get('/users/:username/verify/:verify', user.verify);
 server.post('/users/:username/links', link.new_);
 server.post('/send_links', link.sendLinksTest);
+server.head('/ping', function(req, res, next) { res.send(200); next(); });
 
 var port = Number(process.env.PORT || 7777);
 server.listen(port, function() {

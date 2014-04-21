@@ -75,7 +75,7 @@ function sendLinks(cb) {
             user.save(function(err) {
                 if (err) {
                     log.error(err);
-                    return;
+                    return done();
                 }
                 log.info("Saved follower last updated: " + user.username);
                 if (context.links.length === 0)

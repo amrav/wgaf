@@ -11,6 +11,7 @@ var bunyan = require('bunyan');
 var user = require('./user');
 var link = require('./link');
 var log = require('./utils').log;
+var mail = require('./mail');
 
 var server = restify.createServer({
     name: "wgaf",
@@ -44,18 +45,14 @@ server.use(restify.fullResponse());
 server.use(restify.bodyParser());
 
 server.use(function(request, response, next) {
-    if (!_.has(request, 'header') ||
-        !request.header('Content-Type').match('application/json') &&
-        !request.header('Content-Type').match('x-www-form-urlencoded'))
-        return next();
     if (_.has(request, 'params') && request.params !== null)
         if (_.has(request.params, 'password')) {
             var safeParams = _.omit(request.params, 'password');
             safeParams.password = '**********';
-            log.info({"Request params": safeParams});
+            log.info("Request params", safeParams);
         } else
-            log.info({"Request params": request.params});
-    return next();    
+            log.info("Request params", request.params);
+    return next();
 });
 
 server.post('/users', user.new_);
@@ -67,6 +64,7 @@ server.post('/users/:username/links', link.new_);
 server.post('/send_links', link.sendLinksTest);
 server.head('/ping', function(req, res, next) { res.send(200); next(); });
 server.get('/ping', function(req, res, next) { res.send(200); next(); });
+server.post('/broadcast', mail.broadcast);
 
 var port = Number(process.env.PORT || 7777);
 server.listen(port, function() {

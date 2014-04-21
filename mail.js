@@ -2,6 +2,7 @@ var nodemailer = require('nodemailer');
 var log = require('./utils').log;
 var jwt = require('jwt-simple');
 var utils = require('./utils');
+var m = require('./mongoose');
 
 var username = process.env.MANDRILL_USERNAME;
 var password = process.env.MANDRILL_APIKEY;
@@ -21,7 +22,7 @@ function mail(email, subject, body, cb) {
         subject: subject, 
         html: body 
     };
-
+    log.info("mail: Sending email to " + email);
     smtpTransport.sendMail(mailOptions, function(error, response){
         if(error){
             log.error(error);
@@ -57,6 +58,34 @@ function sendLinks(username, links, email, cb) {
     mail(email, "Daily Digest", body, cb);
 }
 
+function broadcast(req, res, next) {
+    if (!utils.validateRequest(req, res, ['username', 'token', 'subject', 'body']))
+        return next();
+    if (!utils.authenticateRequest(req, res))
+        return next();
+    if (req.params.username !== 'amrav') {
+        res.send(404);
+        return next();
+    }
+    res.send(201);
+    next();
+    m.User.find({verified: true}, 'username email', function(err, users) {
+        if (err) {
+            log.error(err);
+            return;
+        }
+        utils.asyncForEach(users, function(user, done) {
+            mail(user.email, req.params.subject, req.params.body, function() {
+                log.info("Mailed broadcast: " + user.username);
+            });
+            done();
+        }, function() {
+            log.info("Finished mailing broadcast to " + users.length + " users");
+        });
+    });
+}
+
 exports.mail = mail;
 exports.verify = verify;
 exports.sendLinks = sendLinks;
+exports.broadcast = broadcast;

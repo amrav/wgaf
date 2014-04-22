@@ -47,7 +47,7 @@ function sendLinks(username, links, email, cb) {
     var body = "<p>Hi " + username + ". Here are today's links.</p>";
     body += "<ol>";
     for (var i = 0; i < links.length; i++) {
-        body += '<li><a href="' + links[i].url + '">' +
+        body += '<br /><li><a href="' + links[i].url + '">' +
             (links[i].title || links[i].url) + '</a>' +
             ' - <b>' + links[i].username + '</b>' +
             (links[i].summary &&

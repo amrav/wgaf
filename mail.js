@@ -71,16 +71,16 @@ function broadcast(req, res, next) {
     next();
     m.User.find({verified: true}, 'username email', function(err, users) {
         if (err) {
-            log.error(err);
+            req.log.error(err);
             return;
         }
         utils.asyncForEach(users, function(user, done) {
             mail(user.email, req.params.subject, req.params.body, function() {
-                log.info("Mailed broadcast: " + user.username);
+                req.log.info("Mailed broadcast: " + user.username);
             });
             done();
         }, function() {
-            log.info("Finished mailing broadcast to " + users.length + " users");
+            req.log.info("Finished mailing broadcast to " + users.length + " users");
         });
     });
 }

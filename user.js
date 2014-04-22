@@ -20,15 +20,15 @@ function new_(req, res, next) {
             res.send(403, {"code": "UserExists", "message": "username/email already exists"});
 	}
 	else if (err) {
-            log.error(err);
+            req.log.error(err);
             res.send(500);
 	}
 	else {
-            log.info({username: user.username}, "New user created");
+            req.log.info({username: user.username}, "New user created");
             var token = jwt.encode({username: user.username}, SECRET);
             res.send(201, {token: token});
             mail.verify(user.username, user.email, function() {
-                log.info("Sent verification email to " + user.email);
+                req.log.info("Sent verification email to " + user.email);
             });
 	}
         next();
@@ -44,7 +44,7 @@ function login(req, res, next) {
                    function(err, user) {
 	if (err) {
             res.send(500);
-            log.error(err);
+            req.log.error(err);
             return next();
 	}
         if (user === null) {
@@ -53,7 +53,7 @@ function login(req, res, next) {
         }
         user.comparePassword(req.params.password, function(err, match) {
             if (err) {
-                log.error(err);
+                req.log.error(err);
                 res.send(500);
                 return next();
             }
@@ -62,7 +62,7 @@ function login(req, res, next) {
                     res.send(401, {"message": "user not verified"});
                     return next();
                 }
-                log.info({username: user.username}, "User signed in");
+                req.loginfo({username: user.username}, "User signed in");
                 var token = jwt.encode({username: user.username}, SECRET);
                 res.send(200, {token: token});
             }
@@ -86,14 +86,14 @@ function del(req, res, next) {
         function (err, user) {
             if (err) {
                 res.send(500);
-                log.error(err);
+                req.log.error(err);
             }
             else if (user === null) {
                 res.send(404, {"code": "NoUserFound", "message": "no such user exists"});
             }
             else {
                 res.send(200, {"status": "User deleted"});
-                log.info({"Deleted user": user});
+                req.log.info({"Deleted user": user});
             }
             next();
         });
@@ -108,7 +108,7 @@ function follow(req, res, next) {
     m.User.find({username: {$in: [req.params.username, req.params.target]}},
                 function(err, users) {
                     if (err) {
-                        log.error(err);
+                        req.log.error(err);
                         res.send(500);
                         return next();
                     }
@@ -129,18 +129,18 @@ function follow(req, res, next) {
                     followed.followers.push(follower.username);
                     follower.save(function(err, yell) {
                         if (err) {
-                            log.error(err);
+                            req.log.error(err);
                             res.send(500);
                             return next();
                         }
-                        log.info("Saved follower: ", follower);
+                        req.log.info("Saved follower: ", follower);
                         followed.save(function(err, yell) {
                             if (err) {
-                                log.error(err);
+                                req.log.error(err);
                                 res.send(500);
                                 return next();
                             }
-                            log.info("Saved followed: ", followed);
+                            req.log.info("Saved followed: ", followed);
                             res.send(201);
                             return next();
                         });
@@ -155,7 +155,7 @@ function verify(req, res, next) {
     try {
         token = jwt.decode(req.params.verify, utils.SECRET);
     } catch (err) {
-        log.info(err);
+        req.log.info(err);
         res.send(401);
         return next();
     }
@@ -166,11 +166,11 @@ function verify(req, res, next) {
     m.User.update({username: req.params.username}, {verified: true},
                   function(err, users) {
                       if (err) {
-                          log.error(err);
+                          req.log.error(err);
                           res.send(500);
                           return next();
                       }
-                      log.info("Verified email: " + req.params.username);
+                      req.log.info("Verified email: " + req.params.username);
                       res.header('Location', utils.APP_URL);
                       res.send(302);
                       return next(false);

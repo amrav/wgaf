@@ -15,29 +15,24 @@ var mail = require('./mail');
 
 var server = restify.createServer({
     name: "wgaf",
+    log: log
 });
 
 server.pre(function (request, response, next) {
-    var ip = request.headers['x-forwarded-for'] ||
-        request.connection.remoteAddress ||
-        request.socket.remoteAddress ||
-        request.connection.socket.remoteAddress;
-    log.info(request.method + " " + request.url + " from " + ip);
+    request.log.info({req: request}, 'start');
     return next();
 });
 
 server.pre(restify.pre.userAgentConnection());
 
 server.on('after', function(request, response, route) {
-    if (response.header('Content-Type') === 'application/json')
-        log.info({"Response body": response._body});
-    log.info("Finish " + request.method + " " + request.url);
+    request.log.info({res: response}, 'finished');
 });
 
 server.on('uncaughtException', function(request, response, route, error) {
-    log.error(error);
+    request.log.error({err: error},
+                      "Couldn't serve %s %s", request.method, request.url);
     response.send(500);
-    log.error("Couldn't serve %s %s", request.method, request.url);
 });
 
 server.use(restify.CORS());
@@ -49,9 +44,9 @@ server.use(function(request, response, next) {
         if (_.has(request.params, 'password')) {
             var safeParams = _.omit(request.params, 'password');
             safeParams.password = '**********';
-            log.info("Request params", safeParams);
+            request.log.info({"Request params": safeParams});
         } else
-            log.info("Request params", request.params);
+            request.log.info({"Request params": request.params});
     return next();
 });
 

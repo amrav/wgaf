@@ -17,7 +17,7 @@ function new_(req, res, next) {
 
     m.User.findOne({username: req.params.username}, function(err, user) {
         if (err) {
-            log.error(err);
+            req.log.error({err: err});
             res.send(500);
             return next();
         }
@@ -32,11 +32,11 @@ function new_(req, res, next) {
         });
         link.save(function(err, yell) {
             if (err) {
-                log.error(err);
+                req.log.error({err: err});
                 res.send(500);
                 return next();
             }
-            log.info("Saved link: ", {url: link.url, summary: link.summary});
+            req.log.info("Saved link: ", {url: link.url, summary: link.summary});
             res.send(201);
             return next();
         });
@@ -45,7 +45,7 @@ function new_(req, res, next) {
 
 function sendLinksTest(req, res, next) {
     sendLinks(function() {
-        log.info("Links sent!");
+        req.log.info("Links sent!");
         res.send(200);
         next();
     });
@@ -59,7 +59,7 @@ function sendLinks(cb) {
         m.Link.find({username: username, time: {$gte: context.user.updated}},
                     function(err, links) {
                         if (err) {
-                            log.error(err);
+                            req.log.error({err: err});
                             return;
                         }
                         context.links = context.links.concat(links);
@@ -67,17 +67,17 @@ function sendLinks(cb) {
                     });
     }
     function email(user, done) {
-        log.info("constructing email for " + user.username);
+        req.log.info("constructing email for " + user.username);
         var context = {links: [], user: user};
         utils.asyncForEach(user.following, addLinks, context, function() {
-            log.info("links for " + user.username, context.links);
+            req.log.info("links for " + user.username, context.links);
             user.updated = Date.now();
             user.save(function(err) {
                 if (err) {
-                    log.error(err);
+                    req.log.error({err: err});
                     return done();
                 }
-                log.info("Saved follower last updated: " + user.username);
+                req.log.info("Saved follower last updated: " + user.username);
                 if (context.links.length === 0)
                     return done();
                 mail.sendLinks(user.username, context.links, user.email, done);
@@ -86,11 +86,11 @@ function sendLinks(cb) {
     }
     m.User.find({verified: true}, 'username following email updated', function(err, users) {
         if (err) {
-            log.error(err);
+            req.log.error({err: err});
             return;
         }
         utils.asyncForEach(users, email, function() {
-            log.info("Finished mailing users");
+            req.log.info("Finished mailing users");
             if (typeof cb === 'function')
                 cb();
         });

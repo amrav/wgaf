@@ -5,6 +5,13 @@ var API_URL = process.env.API_URL;
 var APP_URL = process.env.APP_URL;
 var bunyan = require('bunyan');
 
+function resSerializer(res) {
+    return {
+        statusCode: res.statusCode,
+        header: res.headers()
+    };
+}
+
 var log = bunyan.createLogger({
     name: 'wgaf',
     streams: [
@@ -15,7 +22,7 @@ var log = bunyan.createLogger({
     ],
     serializers: {
         req: bunyan.stdSerializers.req,
-        res: bunyan.stdSerializers.res,
+        res: resSerializer,
         err: bunyan.stdSerializers.err
     }
 });

@@ -44,9 +44,9 @@ server.use(function(request, response, next) {
         if (_.has(request.params, 'password')) {
             var safeParams = _.omit(request.params, 'password');
             safeParams.password = '**********';
-            request.log.info({"Request params": safeParams});
+            request.log.info({params: safeParams});
         } else
-            request.log.info({"Request params": request.params});
+            request.log.info({params: request.params});
     return next();
 });
 

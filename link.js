@@ -59,7 +59,7 @@ function sendLinks(cb) {
         m.Link.find({username: username, time: {$gte: context.user.updated}},
                     function(err, links) {
                         if (err) {
-                            req.log.error({err: err});
+                            log.error({err: err});
                             return;
                         }
                         context.links = context.links.concat(links);
@@ -67,17 +67,17 @@ function sendLinks(cb) {
                     });
     }
     function email(user, done) {
-        req.log.info("constructing email for " + user.username);
+        log.info("constructing email for " + user.username);
         var context = {links: [], user: user};
         utils.asyncForEach(user.following, addLinks, context, function() {
-            req.log.info("links for " + user.username, context.links);
+            log.info("links for " + user.username, context.links);
             user.updated = Date.now();
             user.save(function(err) {
                 if (err) {
-                    req.log.error({err: err});
+                    log.error({err: err});
                     return done();
                 }
-                req.log.info("Saved follower last updated: " + user.username);
+                log.info("Saved follower last updated: " + user.username);
                 if (context.links.length === 0)
                     return done();
                 mail.sendLinks(user.username, context.links, user.email, done);
@@ -86,11 +86,11 @@ function sendLinks(cb) {
     }
     m.User.find({verified: true}, 'username following email updated', function(err, users) {
         if (err) {
-            req.log.error({err: err});
+            log.error({err: err});
             return;
         }
         utils.asyncForEach(users, email, function() {
-            req.log.info("Finished mailing users");
+            log.info("Finished mailing users");
             if (typeof cb === 'function')
                 cb();
         });

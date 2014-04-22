@@ -10,7 +10,7 @@ var log = bunyan.createLogger({
     streams: [
         {
             stream: process.stdout,
-            level: 'trace'
+            level: 'debug'
         },
     ],
     serializers: {

@@ -62,7 +62,7 @@ function login(req, res, next) {
                     res.send(401, {"message": "user not verified"});
                     return next();
                 }
-                req.loginfo({username: user.username}, "User signed in");
+                req.log.info({username: user.username}, "User signed in");
                 var token = jwt.encode({username: user.username}, SECRET);
                 res.send(200, {token: token});
             }

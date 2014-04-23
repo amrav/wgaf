@@ -36,7 +36,7 @@ function new_(req, res, next) {
                 res.send(500);
                 return next();
             }
-            req.log.info("Saved link: ", {url: link.url, summary: link.summary});
+            req.log.info({link: link}, "Saved link");
             res.send(201);
             return next();
         });
@@ -45,7 +45,6 @@ function new_(req, res, next) {
 
 function sendLinksTest(req, res, next) {
     sendLinks(function() {
-        req.log.info("Links sent!");
         res.send(200);
         next();
     });
@@ -67,17 +66,16 @@ function sendLinks(cb) {
                     });
     }
     function email(user, done) {
-        log.info("constructing email for " + user.username);
+        log.info({user: user.username}, "constructing email");
         var context = {links: [], user: user};
         utils.asyncForEach(user.following, addLinks, context, function() {
-            log.info("links for " + user.username, context.links);
+            log.info({user: user.username, links: context.links}, "links for user");
             user.updated = Date.now();
             user.save(function(err) {
                 if (err) {
                     log.error({err: err});
                     return done();
                 }
-                log.info("Saved follower last updated: " + user.username);
                 if (context.links.length === 0)
                     return done();
                 mail.sendLinks(user.username, context.links, user.email, done);

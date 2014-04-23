@@ -24,7 +24,7 @@ function new_(req, res, next) {
             res.send(500);
 	}
 	else {
-            req.log.info({username: user.username}, "New user created");
+            req.log.info({user: user}, "New user created");
             var token = jwt.encode({username: user.username}, SECRET);
             res.send(201, {token: token});
             mail.verify(user.username, user.email, function() {
@@ -67,7 +67,7 @@ function login(req, res, next) {
                 res.send(200, {token: token});
             }
             else {
-                log.info({username: user.username}, "User login failed auth");
+                req.log.info({username: user.username}, "User login failed auth");
                 res.send(403, {"code": "BadAuth"});
             }
             next();
@@ -93,7 +93,7 @@ function del(req, res, next) {
             }
             else {
                 res.send(200, {"status": "User deleted"});
-                req.log.info({"Deleted user": user});
+                req.log.info({user: user}, "Deleted user");
             }
             next();
         });
@@ -133,14 +133,14 @@ function follow(req, res, next) {
                             res.send(500);
                             return next();
                         }
-                        req.log.info("Saved follower: ", follower);
                         followed.save(function(err, yell) {
                             if (err) {
                                 req.log.error(err);
                                 res.send(500);
                                 return next();
                             }
-                            req.log.info("Saved followed: ", followed);
+                            req.log.info({follower: follower.username, followed: followed.username},
+                                         "Saved follow");
                             res.send(201);
                             return next();
                         });
@@ -170,7 +170,7 @@ function verify(req, res, next) {
                           res.send(500);
                           return next();
                       }
-                      req.log.info("Verified email: " + req.params.username);
+                      req.log.info({user: req.params.username}, "Verified email");
                       res.header('Location', utils.APP_URL);
                       res.send(302);
                       return next(false);

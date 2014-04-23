@@ -18,12 +18,14 @@ var server = restify.createServer({
     log: log
 });
 
+server.pre(restify.pre.userAgentConnection());
+
 server.pre(function (request, response, next) {
+    if (request.url === '/ping')
+        return response.send(200);
     request.log.info({req: request}, 'start');
     return next();
 });
-
-server.pre(restify.pre.userAgentConnection());
 
 server.on('after', function(request, response, route) {
     request.log.info({res: response}, 'finished');
@@ -57,8 +59,6 @@ server.post('/users/:username/following', user.follow);
 server.get('/users/:username/verify/:verify', user.verify);
 server.post('/users/:username/links', link.new_);
 server.post('/send_links', link.sendLinksTest);
-server.head('/ping', function(req, res, next) { res.send(200); next(); });
-server.get('/ping', function(req, res, next) { res.send(200); next(); });
 server.post('/broadcast', mail.broadcast);
 
 var port = Number(process.env.PORT || 7777);

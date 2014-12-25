@@ -4,17 +4,20 @@
   "description": "Share articles",
   "main": "server.js",
   "dependencies": {
-    "bunyan": "~0.22.3",
-    "restify": "2.6.x",
-    "request": "2.34.x",
-    "underscore": "1.6.x",
-    "mongoose": "~3.8.8",
     "bcrypt": "~0.7.7",
+    "bunyan": "~0.22.3",
+    "jsonwebtoken": "^2.0.0",
     "jwt-simple": "~0.2.0",
     "mandrill-api": "~1.0.39",
+    "mongoose": "~3.8.8",
     "nodemailer": "~0.6.2",
+    "nodetime": "~0.8.15",
+    "request": "2.34.x",
+    "restify": "^2.8.4",
+    "restify-jwt": "0.0.2",
+    "restify-oauth2": "^4.0.0",
     "sugar": "~1.4.1",
-    "nodetime": "~0.8.15"
+    "underscore": "1.6.x"
   },
   "engines": {
     "node": "0.10.x",

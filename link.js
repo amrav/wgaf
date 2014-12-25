@@ -8,36 +8,28 @@ var mail = require('./mail');
 require('sugar');
 
 function new_(req, res, next) {
-    if (!utils.validateRequest(req, res, ['token', 'username', 'url', 'summary'])) {
-        return next();
+    if (!utils.validateRequest(req, res, next, ['url', 'summary'])) {
+        return;
     }
 
-    if (!utils.authenticateRequest(req, res))
-        return next();
-
-    m.User.findOne({username: req.params.username}, function(err, user) {
+    m.User.findOne({username: req.user.username}, function(err, user) {
         if (err) {
-            req.log.error({err: err});
-            res.send(500);
-            return next();
+            throw err;
         }
         if (user === null) {
-            res.send(404, {"code": "NoUserFound", "message": "no such user exists"});
-            return next();
+            return next(new restify.errors.ResourceNotFoundError('no such user found'));
         }
         var link = new m.Link({
             'url': req.params.url,
             'summary': req.params.summary,
-            'username': req.params.username
+            'username': req.user.username
         });
-        link.save(function(err, yell) {
+        link.save(function(err, link) {
             if (err) {
-                req.log.error({err: err});
-                res.send(500);
-                return next();
+                throw err;
             }
             req.log.info({link: link}, "Saved link");
-            res.send(201);
+            res.send(200);
             return next();
         });
     });

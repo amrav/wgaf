@@ -12,6 +12,9 @@ var user = require('./user');
 var link = require('./link');
 var log = require('./utils').log;
 var mail = require('./mail');
+var auth = require('./auth');
+var restifyJwt = require('restify-jwt');
+var utils = require('./utils');
 
 var server = restify.createServer({
     name: "wgaf",
@@ -23,12 +26,12 @@ server.pre(restify.pre.userAgentConnection());
 server.pre(function (request, response, next) {
     if (request.url === '/ping')
         return response.send(200);
-    request.log.info({req: request}, 'start');
+    request.log.debug({req: request}, 'start');
     return next();
 });
 
 server.on('after', function(request, response, route) {
-    request.log.info({res: response}, 'finished');
+    request.log.debug({res: response}, 'finished');
 });
 
 server.on('uncaughtException', function(request, response, route, error) {
@@ -37,32 +40,34 @@ server.on('uncaughtException', function(request, response, route, error) {
     response.send(500);
 });
 
+restify.CORS.ALLOW_HEADERS.push('authorization');
 server.use(restify.CORS());
 server.use(restify.fullResponse());
 server.use(restify.bodyParser());
+server.use(restifyJwt({secret: utils.SECRET})
+           .unless({path: ['/ping', '/auth']}));
 
 server.use(function(request, response, next) {
     if (_.has(request, 'params') && request.params !== null)
         if (_.has(request.params, 'password')) {
             var safeParams = _.omit(request.params, 'password');
             safeParams.password = '**********';
-            request.log.info({params: safeParams});
+            request.log.debug({params: safeParams});
         } else
-            request.log.info({params: request.params});
+            request.log.debug({params: request.params});
     return next();
 });
 
 server.post('/users', user.new_);
 server.del('/users/:username', user.del);
-server.post('/users/:username/sessions', user.login);
 server.post('/users/:username/following', user.follow);
 server.get('/users/:username/verify/:verify', user.verify);
 server.post('/users/:username/links', link.new_);
 server.post('/send_links', link.sendLinksTest);
 server.post('/broadcast', mail.broadcast);
+server.post('/auth', auth.getAccessToken);
 
 var port = Number(process.env.PORT || 7777);
 server.listen(port, function() {
     log.info('%s listening at %s', server.name, server.url);
 });
-

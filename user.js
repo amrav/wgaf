@@ -2,14 +2,17 @@ var _ = require('underscore');
 var m = require('./mongoose');
 var utils = require('./utils.js');
 var log = utils.log;
-var jwt = require('jwt-simple');
+var jwt = require('jsonwebtoken');
 var mail = require('./mail');
 require('sugar');
+var restify = require('restify');
 var SECRET = utils.SECRET;
 
 function new_(req, res, next) {
-    if (!utils.validateRequest(req, res, ['username', 'email', 'password'])) 
-	return next();
+    if (!utils.validateRequest(req, res, next, ['username', 'email', 'password'])) {
+        return;
+    }
+
     var user = new m.User({'username': req.params.username,
                            'email': req.params.email,
                            'password': req.params.password,
@@ -25,7 +28,7 @@ function new_(req, res, next) {
 	}
 	else {
             req.log.info({user: user}, "New user created");
-            var token = jwt.encode({username: user.username}, SECRET);
+            var token = jwt.sign({username: user.username}, SECRET);
             res.send(201, {token: token});
             mail.verify(user.username, user.email, function() {
                 req.log.info("Sent verification email to " + user.email);
@@ -35,54 +38,12 @@ function new_(req, res, next) {
     });
 }
 
-function login(req, res, next) {
-    
-    if (!utils.validateRequest(req, res, ['username', 'password'])) 
-	return next();
-    
-    m.User.findOne({username: req.params.username}, "username password verified",
-                   function(err, user) {
-	if (err) {
-            res.send(500);
-            req.log.error(err);
-            return next();
-	}
-        if (user === null) {
-            res.send(404, {"code": "NoUserFound", "message": "no such user exists"});
-            return next();
-        }
-        user.comparePassword(req.params.password, function(err, match) {
-            if (err) {
-                req.log.error(err);
-                res.send(500);
-                return next();
-            }
-            if (match) {
-                if (_.has(user, 'verified') && !user.verified) {
-                    res.send(401, {"message": "user not verified"});
-                    return next();
-                }
-                req.log.info({username: user.username}, "User signed in");
-                var token = jwt.encode({username: user.username}, SECRET);
-                res.send(200, {token: token});
-            }
-            else {
-                req.log.info({username: user.username}, "User login failed auth");
-                res.send(403, {"code": "BadAuth"});
-            }
-            next();
-        });
-    });
-}
-
 function del(req, res, next) {
-    if (!utils.validateRequest(req, res, ['token', 'username']))
-        return next();
-    if (!utils.authenticateRequest(req, res))
-        return next();
-        
+    if (!utils.validateRequest(req, res, next, ['token', 'username']))
+        return;
+
     m.User.findOneAndRemove(
-        {'username': username},
+        {'username': req.user.username},
         function (err, user) {
             if (err) {
                 res.send(500);
@@ -100,48 +61,46 @@ function del(req, res, next) {
 }
 
 function follow(req, res, next) {
-    if (!utils.validateRequest(req, res, ['token', 'username', 'target']))
-        return next();
-    if (!utils.authenticateRequest(req, res))
-        return next();
-    
-    m.User.find({username: {$in: [req.params.username, req.params.target]}},
+    if (!utils.validateRequest(req, res, next, ['target']))
+        return;
+
+    if (req.user.username === req.params.target) {
+        next(new restify.errors.InvalidArgumentError('cannot follow yourself'));
+        return;
+    }
+
+    m.User.find({username: {$in: [req.user.username, req.params.target]}},
                 function(err, users) {
                     if (err) {
-                        req.log.error(err);
-                        res.send(500);
-                        return next();
+                        throw err;
                     }
                     if (users.length !== 2) {
-                        res.send(404, {"code": "NoUserFound",
-                                       "message": "no such user exists"});
-                        return next();
+                        return next(new restify.errors.ResourceNotFoundError('no such user found'));
                     }
                     var follower, followed;
-                    if (users[0].username === req.params.username) {
+                    if (users[0].username === req.user.username) {
                         follower = users[0];
                         followed = users[1];
                     } else {
                         follower = users[1];
                         followed = users[0];
                     }
+                    if (follower.following.indexOf(followed.username) > -1) {
+                        return next(new restify.errors.InvalidArgumentError('already following ' + followed.username));
+                    }
                     follower.following.push(followed.username);
                     followed.followers.push(follower.username);
                     follower.save(function(err, yell) {
                         if (err) {
-                            req.log.error(err);
-                            res.send(500);
-                            return next();
+                            throw err;
                         }
                         followed.save(function(err, yell) {
                             if (err) {
-                                req.log.error(err);
-                                res.send(500);
-                                return next();
+                                throw err;
                             }
                             req.log.info({follower: follower.username, followed: followed.username},
                                          "Saved follow");
-                            res.send(201);
+                            res.send(200);
                             return next();
                         });
                     });
@@ -149,36 +108,34 @@ function follow(req, res, next) {
 }
 
 function verify(req, res, next) {
-    if (!utils.validateRequest(req, res, ['username', 'verify']))
-        return next();
-    var token;
-    try {
-        token = jwt.decode(req.params.verify, utils.SECRET);
-    } catch (err) {
-        req.log.info(err);
-        res.send(401);
-        return next();
+    if (!utils.validateRequest(req, res, next, ['verify'])) {
+        return;
     }
-    if (token.username !== req.params.username || token.type !== 'verify') {
-        res.send(401);
-        return next();
-    }
-    m.User.update({username: req.params.username}, {verified: true},
-                  function(err, users) {
-                      if (err) {
-                          req.log.error(err);
-                          res.send(500);
-                          return next();
-                      }
-                      req.log.info({user: req.params.username}, "Verified email");
-                      res.header('Location', utils.APP_URL);
-                      res.send(302);
-                      return next(false);
-                  });
+
+    jwt.verify(req.params.verify, utils.SECRET, function(err, decoded) {
+        if (err) {
+            next(new restify.errors.InvalidArgumentError('Verification code invalid'));
+            return;
+        }
+        if (token.username !== req.user.username || token.type !== 'verify') {
+            next(new restify.errors.InvalidArgumentError('Verification code invalid'));
+            return;
+        }
+        m.User.update(
+            {username: req.user.username}, {verified: true},
+            function(err, users) {
+                if (err) {
+                    throw err;
+                }
+                req.log.info({user: req.user.username}, "Verified email");
+                res.header('Location', utils.APP_URL);
+                res.send(302);
+                return next(false);
+            });
+    });
 }
 
 exports.new_ = new_;
 exports.del = del;
 exports.follow = follow;
-exports.login = login;
 exports.verify = verify;

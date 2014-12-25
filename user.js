@@ -20,21 +20,19 @@ function new_(req, res, next) {
                            'updated': Date.create("1 day ago")});
     user.save(function(err, user) {
 	if (err && err.code === m.UNIQUE_KEY_ERROR) {
-            res.send(403, {"code": "UserExists", "message": "username/email already exists"});
+            return next(new restify.errors.InvalidArgumentError('username/email already exists'));
 	}
 	else if (err) {
-            req.log.error(err);
-            res.send(500);
+            throw(err);
 	}
 	else {
             req.log.info({user: user}, "New user created");
-            var token = jwt.sign({username: user.username}, SECRET);
-            res.send(201, {token: token});
+            res.send(200);
             mail.verify(user.username, user.email, function() {
                 req.log.info("Sent verification email to " + user.email);
             });
+            return next();
 	}
-        next();
     });
 }
 

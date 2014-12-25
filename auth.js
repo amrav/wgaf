@@ -15,7 +15,7 @@ exports.getAccessToken = function(req, res, next) {
                 throw err;
             }
             if (user === null) {
-                next(new restify.errors.InvalidCredentialsError('Bad auth'));
+                next(new restify.errors.InvalidCredentialsError('bad auth'));
                 return;
             }
             user.comparePassword(req.params.password, function(err, match) {
@@ -33,7 +33,7 @@ exports.getAccessToken = function(req, res, next) {
                 }
                 else {
                     req.log.info({username: user.username}, "User login failed auth");
-                    return next(new restify.errors.InvalidCredentialsError('Bad auth'));
+                    return next(new restify.errors.InvalidCredentialsError('bad auth'));
                 }
             });
         });

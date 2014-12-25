@@ -4,6 +4,7 @@ var SECRET = process.env.SECRET || "foobar";
 var API_URL = process.env.API_URL;
 var APP_URL = process.env.APP_URL;
 var bunyan = require('bunyan');
+var restify = require('restify');
 
 function resSerializer(res) {
     return {

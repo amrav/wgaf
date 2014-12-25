@@ -6,7 +6,8 @@ var log = utils.log;
 
 exports.UNIQUE_KEY_ERROR = 11000;
 
-var mongoUri = process.env.MONGOHQ_URL || 'mongodb://localhost/wgaf';
+var mongoUri = process.env.MONGOHQ_URL || process.env.MONGOLAB_URI ||
+        'mongodb://localhost/wgaf';
 mongoose.connect(mongoUri);
 
 var db = mongoose.connection;

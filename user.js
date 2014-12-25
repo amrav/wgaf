@@ -20,7 +20,7 @@ function new_(req, res, next) {
                            'updated': Date.create("1 day ago")});
     user.save(function(err, user) {
 	if (err && err.code === m.UNIQUE_KEY_ERROR) {
-            return next(new restify.errors.InvalidArgumentError('username/email already exists'));
+            return next(new restify.errors.InvalidArgumentError('username already exists'));
 	}
 	else if (err) {
             throw(err);

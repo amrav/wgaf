@@ -45,7 +45,7 @@ server.use(restify.CORS());
 server.use(restify.fullResponse());
 server.use(restify.bodyParser());
 server.use(restifyJwt({secret: utils.SECRET})
-           .unless({path: ['/ping', '/auth']}));
+           .unless({path: ['/ping', '/auth', '/users']}));
 
 server.use(function(request, response, next) {
     if (_.has(request, 'params') && request.params !== null)

@@ -3,14 +3,13 @@ var jwt = require('jsonwebtoken');
 var utils = require('./utils');
 var log = utils.log;
 var m = require('./mongoose');
-var _ = require('underscore');
 
 exports.getAccessToken = function(req, res, next) {
     if (!utils.validateRequest(req, res, next, ['username', 'password'])) {
         return;
     }
     m.User.findOne(
-        {username: req.params.username}, "username password verified",
+        {username: req.params.username}, 'username password verified',
         function(err, user) {
             if (err) {
                 throw err;
@@ -24,7 +23,7 @@ exports.getAccessToken = function(req, res, next) {
                     throw err;
                 }
                 if (match) {
-                    if (_.has(user, 'verified') && !user.verified) {
+                    if (user.verified !== undefined && !user.verified) {
                         return next(new restify.errors.NotAuthorizedError('email not verified'));
                     }
                     req.log.info({username: user.username}, "User signed in");

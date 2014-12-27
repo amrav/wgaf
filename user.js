@@ -132,22 +132,22 @@ function verify(req, res, next) {
         return;
     }
 
-    jwt.verify(req.params.verify, utils.SECRET, function(err, decoded) {
+    jwt.verify(req.params.verify, utils.SECRET, function(err, token) {
         if (err) {
             next(new restify.errors.InvalidArgumentError('Verification code invalid'));
             return;
         }
-        if (token.username !== req.user.username || token.type !== 'verify') {
+        if (token.type !== 'verify') {
             next(new restify.errors.InvalidArgumentError('Verification code invalid'));
             return;
         }
         m.User.update(
-            {username: req.user.username}, {verified: true},
+            {username: token.username}, {verified: true},
             function(err, users) {
                 if (err) {
                     throw err;
                 }
-                req.log.info({user: req.user.username}, "Verified email");
+                req.log.info({user: token.username}, "Verified email");
                 res.header('Location', utils.APP_URL);
                 res.send(302);
                 return next(false);

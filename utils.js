@@ -9,7 +9,8 @@ var restify = require('restify');
 function resSerializer(res) {
     return {
         statusCode: res.statusCode,
-        header: res.headers()
+        header: res.headers(),
+        body: res._body
     };
 }
 
@@ -59,6 +60,10 @@ function asyncForEach(list, func, context, callback) {
             func(list[i], context, doneOne);
     }
 }
+
+RegExp.escape = function(s) {
+    return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+};
 
 exports.validateRequest = validateRequest;
 exports.SECRET = SECRET;

@@ -36,6 +36,28 @@ function new_(req, res, next) {
     });
 }
 
+function search(req, res, next) {
+    if (req.query.search) {
+        m.User
+            .find({$or: [
+                {username: {$regex: RegExp.escape(req.query.search)}},
+                {email: req.query.search}
+            ]}, {username: 1, _id:0})
+            .sort({username: 1})
+            .limit(10)
+            .exec(function(err, users) {
+                if (err) {
+                    throw err;
+                }
+                users = users || [];
+                res.send(200, users);
+                return next();
+            });
+    } else {
+        return next(new restify.errors.MissingParameterError('search term required'));
+    }
+}
+
 function del(req, res, next) {
     if (!utils.validateRequest(req, res, next, ['token', 'username']))
         return;
@@ -137,3 +159,4 @@ exports.new_ = new_;
 exports.del = del;
 exports.follow = follow;
 exports.verify = verify;
+exports.search = search;

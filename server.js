@@ -43,6 +43,7 @@ server.on('uncaughtException', function(request, response, route, error) {
 restify.CORS.ALLOW_HEADERS.push('authorization');
 server.use(restify.CORS());
 server.use(restify.fullResponse());
+server.use(restify.queryParser());
 server.use(restify.bodyParser());
 server.use(restifyJwt({secret: utils.SECRET})
            .unless({path: ['/ping', '/auth', '/users']}));
@@ -59,6 +60,7 @@ server.use(function(request, response, next) {
 });
 
 server.post('/users', user.new_);
+server.get('/users', user.search);
 server.del('/users/:username', user.del);
 server.post('/users/:username/following', user.follow);
 server.get('/users/:username/verify/:verify', user.verify);

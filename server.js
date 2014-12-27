@@ -45,8 +45,6 @@ server.use(restify.CORS());
 server.use(restify.fullResponse());
 server.use(restify.queryParser());
 server.use(restify.bodyParser());
-server.use(restifyJwt({secret: utils.SECRET})
-           .unless({path: ['/ping', '/auth', '/users']}));
 
 server.use(function(request, response, next) {
     if (_.has(request, 'params') && request.params !== null)
@@ -59,14 +57,16 @@ server.use(function(request, response, next) {
     return next();
 });
 
+var jwtAuth = restifyJwt({secret: utils.SECRET});
+
 server.post('/users', user.new_);
 server.get('/users', user.search);
-server.del('/users/:username', user.del);
-server.post('/users/:username/following', user.follow);
+server.del('/users/:username', jwtAuth, user.del);
+server.post('/users/:username/following', jwtAuth, user.follow);
 server.get('/users/:username/verify/:verify', user.verify);
-server.post('/users/:username/links', link.new_);
-server.post('/send_links', link.sendLinksTest);
-server.post('/broadcast', mail.broadcast);
+server.post('/users/:username/links', jwtAuth, link.new_);
+server.post('/send_links', jwtAuth, link.sendLinksTest);
+server.post('/broadcast', jwtAuth, mail.broadcast);
 server.post('/auth', auth.getAccessToken);
 
 var port = Number(process.env.PORT || 7777);

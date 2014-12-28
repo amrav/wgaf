@@ -40,7 +40,8 @@ function search(req, res, next) {
     if (req.query.search) {
         m.User
             .find({$or: [
-                {username: {$regex: RegExp.escape(req.query.search)}},
+                {username: {$regex: RegExp.escape(req.query.search),
+                            $options: 'i'}},
                 {email: req.query.search}
             ]}, {username: 1, _id:0})
             .sort({username: 1})

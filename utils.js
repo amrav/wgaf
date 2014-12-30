@@ -65,9 +65,16 @@ RegExp.escape = function(s) {
     return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 };
 
+function isInt(value) {
+  return !isNaN(value) &&
+         parseInt(Number(value)) == value &&
+         !isNaN(parseInt(value, 10));
+}
+
 exports.validateRequest = validateRequest;
 exports.SECRET = SECRET;
 exports.log = log;
 exports.API_URL = API_URL;
 exports.APP_URL = APP_URL;
 exports.asyncForEach = asyncForEach;
+exports.isInt = isInt;

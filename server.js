@@ -65,6 +65,7 @@ server.del('/users/:username', jwtAuth, user.del);
 server.post('/users/:username/following', jwtAuth, user.follow);
 server.get('/users/:username/verify/:verify', user.verify);
 server.post('/users/:username/links', jwtAuth, link.new_);
+server.get('/users/:username/links', jwtAuth, link.get);
 server.post('/send_links', jwtAuth, link.sendLinksTest);
 server.post('/broadcast', jwtAuth, mail.broadcast);
 server.post('/auth', auth.getAccessToken);

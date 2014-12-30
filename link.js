@@ -5,6 +5,7 @@ var log = require('bunyan').createLogger({'name': 'wgaf'});
 var jwt = require('jwt-simple');
 var SECRET = utils.SECRET;
 var mail = require('./mail');
+var restify = require('restify');
 require('sugar');
 
 function new_(req, res, next) {
@@ -33,6 +34,34 @@ function new_(req, res, next) {
             return next();
         });
     });
+}
+
+function get(req, res, next) {
+    if (req.user.username !== req.params.username) {
+        next(new restify.errors.NotAuthorizedError());
+        return;
+    }
+    if (!utils.validateRequest(req, res, next, ['page', 'limit'])) {
+        return;
+    }
+    if (!utils.isInt(req.query.page) || !utils.isInt(req.query.limit) ||
+        req.query.page < 0 || req.query.limit < 0) {
+        next(new restify.errors.InvalidArgumentError('page and limit must be non-negative integers'));
+        return;
+    }
+    var cursor = m.Link.find({username: req.user.username},
+                             {url: 1, summary: 1, time: 1, _id: 0})
+            .skip(req.query.page * req.query.limit)
+            .sort({time: -1})
+            .limit(req.query.limit)
+            .exec(function(err, data) {
+                if (err) {
+                    throw err;
+                }
+                res.send(200, data);
+                next();
+                return;
+            });
 }
 
 function sendLinksTest(req, res, next) {

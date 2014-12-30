@@ -88,16 +88,19 @@ function sendLinks(cb) {
 }
 
 (function () {
-    function runUpdate() {
-        var ms = Date.create('18:00+0530') - Date.now();
-        if (ms > 0) {
-            setTimeout(function() {
-                sendLinks(runUpdate);
-            }, ms);
-        }
+    if (process.env.NODE_ENV === 'production') {
+        var runUpdate = function runUpdate() {
+            var ms = Date.create('18:00+0530') - Date.now();
+            if (ms > 0) {
+                setTimeout(function() {
+                    sendLinks(runUpdate);
+                }, ms);
+            }
+        };
+        runUpdate();
     }
-    runUpdate();
 })();
 
 exports.new_ = new_;
 exports.sendLinksTest = sendLinksTest;
+exports.get = get;

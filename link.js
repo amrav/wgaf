@@ -94,7 +94,7 @@ function sendLinks(cb) {
             user.updated = Date.now();
             user.save(function(err) {
                 if (err) {
-                    log.error({err: err});
+                    log.error({err: err, user: user}, 'Error saving user!');
                     return done();
                 }
                 if (context.links.length === 0)
@@ -103,17 +103,19 @@ function sendLinks(cb) {
             });
         });
     }
-    m.User.find({verified: true}, 'username following email updated', function(err, users) {
-        if (err) {
-            log.error({err: err});
-            return;
-        }
-        utils.asyncForEach(users, email, function() {
-            log.info("Finished mailing users");
-            if (typeof cb === 'function')
-                cb();
+    m.User
+        .find({verified: true})
+        .select('username following email updated')
+        .exec(function(err, users) {
+            if (err) {
+                throw err;
+            }
+            utils.asyncForEach(users, email, function() {
+                log.info("Finished mailing users");
+                if (typeof cb === 'function')
+                    cb();
+            });
         });
-    });
 }
 
 (function () {

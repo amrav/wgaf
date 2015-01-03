@@ -72,10 +72,10 @@ function sendLinksTest(req, res, next) {
 }
 
 function sendLinks(cb) {
+
+    log.info('Links update started');
+
     function addLinks(username, context, done) {
-        if (context.user.updated === null) {
-            context.user.updated = Date.create("1 day ago");
-        }
         m.Link.find({username: username, time: {$gte: context.user.updated}},
                     function(err, links) {
                         if (err) {
@@ -86,6 +86,7 @@ function sendLinks(cb) {
                         done();
                     });
     }
+
     function email(user, done) {
         log.info({user: user.username}, "constructing email");
         var context = {links: [], user: user};
@@ -103,8 +104,10 @@ function sendLinks(cb) {
             });
         });
     }
+
+    // Update all users that haven't been updated for at least 20 hours.
     m.User
-        .find({verified: true})
+        .find({verified: true, updated: {$lt: Date.create('20 hours ago')}})
         .select('username following email updated')
         .exec(function(err, users) {
             if (err) {
@@ -118,19 +121,30 @@ function sendLinks(cb) {
         });
 }
 
-(function () {
-    if (process.env.NODE_ENV === 'production') {
-        var runUpdate = function runUpdate() {
-            var ms = Date.create('18:00+0530') - Date.now();
-            if (ms > 0) {
-                setTimeout(function() {
-                    sendLinks(runUpdate);
-                }, ms);
-            }
-        };
-        runUpdate();
+function future(date) {
+    while (date < Date.now()) {
+        date = date.addHours(24);
     }
-})();
+    return date;
+}
+
+function scheduleUpdates() {
+
+    // This redundancy is required because Heroku
+    // can randomly restart dynos.
+    var firstUpdate = future(Date.create('18:00+0530')) - Date.now();
+    var secondUpdate = future(Date.create('19:00+0530')) - Date.now();
+    var thirdUpdate = future(Date.create('20:00+0530')) - Date.now();
+
+    setTimeout(sendLinks, firstUpdate);
+    setTimeout(sendLinks, secondUpdate);
+    setTimeout(sendLinks, thirdUpdate);
+}
+
+if (process.env.NODE_ENV === 'production' || true) {
+    scheduleUpdates();
+    setInterval(scheduleUpdates, 24 * 3600 * 1000);
+}
 
 exports.new_ = new_;
 exports.sendLinksTest = sendLinksTest;

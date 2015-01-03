@@ -15,12 +15,13 @@ db.on('error', log.error.bind(console, 'connection error:'));
 
 var userSchema = mongoose.Schema({
     username: {type: String, index: {unique: true }, required: true},
-    email: {type: String, required: true},
+    email: {type: String, required: true, index: true},
     following: [String],
     followers: [String],
-    updated: {type: Date, required: true},
+    updated: {type: Date, required: true, index: true},
     password: {type: String, required: true},
-    verified: {type: Boolean, default: false, required: true}
+    verified: {type: Boolean, default: false, required: true},
+    created: {type: Date, required: true, default: Date.now}
 });
 
 userSchema.pre('save', function(next) {

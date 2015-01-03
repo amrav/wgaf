@@ -13,6 +13,11 @@ function new_(req, res, next) {
         return;
     }
 
+    if (!utils.validateUsername(req.params.username)) {
+        next(restify.errors.InvalidArgumentError('username invalid'));
+        return;
+    }
+
     var user = new m.User({'username': req.params.username,
                            'email': req.params.email,
                            'password': req.params.password,

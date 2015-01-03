@@ -71,6 +71,14 @@ function isInt(value) {
          !isNaN(parseInt(value, 10));
 }
 
+function validateUsername(username) {
+    if (!/^[A-Za-z][_A-Za-z0-9]+$/.test(username)) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
 exports.validateRequest = validateRequest;
 exports.SECRET = SECRET;
 exports.log = log;
@@ -78,3 +86,4 @@ exports.API_URL = API_URL;
 exports.APP_URL = APP_URL;
 exports.asyncForEach = asyncForEach;
 exports.isInt = isInt;
+exports.validateUsername = validateUsername;

@@ -156,8 +156,26 @@ function verify(req, res, next) {
     });
 }
 
+function get(req, res, next) {
+    m.User
+        .findOne({username: req.params.username})
+        .select({username: 1, followers: 1, following: 1, _id: 0})
+        .exec(function(err, user) {
+            if (err) {
+                throw err;
+            } else if (!user) {
+                next(new restify.errors.ResourceNotFoundError('no such username'));
+                return;
+            } else {
+                res.send(200, user);
+                next();
+            }
+        });
+}
+
 exports.new_ = new_;
 exports.del = del;
 exports.follow = follow;
 exports.verify = verify;
 exports.search = search;
+exports.get = get;

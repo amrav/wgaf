@@ -61,6 +61,7 @@ var jwtAuth = restifyJwt({secret: utils.SECRET});
 
 server.post('/users', user.new_);
 server.get('/users', user.search);
+server.get('/users/:username', user.get);
 server.del('/users/:username', jwtAuth, user.del);
 server.post('/users/:username/following', jwtAuth, user.follow);
 server.get('/users/:username/verify/:verify', user.verify);

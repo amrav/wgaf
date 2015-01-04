@@ -37,11 +37,12 @@ function new_(req, res, next) {
 }
 
 function get(req, res, next) {
+    var limit = null, skip = null;
     if (req.user.username !== req.params.username) {
-        next(new restify.errors.NotAuthorizedError());
-        return;
+        limit = 10;
+        skip = 0;
     }
-    if (!utils.validateRequest(req, res, next, ['page', 'limit'])) {
+    else if (!utils.validateRequest(req, res, next, ['page', 'limit'])) {
         return;
     }
     if (!utils.isInt(req.query.page) || !utils.isInt(req.query.limit) ||
@@ -49,11 +50,11 @@ function get(req, res, next) {
         next(new restify.errors.InvalidArgumentError('page and limit must be non-negative integers'));
         return;
     }
-    var cursor = m.Link.find({username: req.user.username},
+    var cursor = m.Link.find({username: req.params.username},
                              {url: 1, summary: 1, time: 1, _id: 0})
-            .skip(req.query.page * req.query.limit)
+            .skip(skip || (req.query.page * req.query.limit))
             .sort({time: -1})
-            .limit(req.query.limit)
+            .limit(limit || req.query.limit)
             .exec(function(err, data) {
                 if (err) {
                     throw err;

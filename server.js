@@ -15,6 +15,7 @@ var mail = require('./mail');
 var auth = require('./auth');
 var restifyJwt = require('restify-jwt');
 var utils = require('./utils');
+var cors = require('cors');
 
 var server = restify.createServer({
     name: "wgaf",
@@ -44,8 +45,7 @@ server.on('uncaughtException', function(request, response, route, error) {
     response.send(500);
 });
 
-restify.CORS.ALLOW_HEADERS.push('Authorization');
-server.use(restify.CORS());
+server.use(cors());
 server.use(restify.fullResponse());
 server.use(restify.queryParser());
 server.use(restify.bodyParser());
@@ -63,14 +63,12 @@ server.use(function(request, response, next) {
 
 var jwtAuth = restifyJwt({secret: utils.SECRET});
 
-server.opts('.*', function(req, res, next) {
-    res.send(204);
-});
+server.opts('.*', cors());
 
 server.post('/users', user.new_);
 server.get('/users', user.search);
 server.get('/users/:username', user.get);
-server.del('/users/:username', jwtAuth, user.del);
+// server.del('/users/:username', jwtAuth, user.del);
 server.post('/users/:username/following', jwtAuth, user.follow);
 server.get('/users/:username/verify/:verify', user.verify);
 server.post('/users/forgot-password', user.forgotPassword);

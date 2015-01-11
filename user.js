@@ -183,12 +183,12 @@ function get(req, res, next) {
 }
 
 function forgotPassword(req, res, next) {
-    if (!utils.validateRequest(req, res, next, ['username'])) {
+    if (!utils.validateRequest(req, res, next, ['email'])) {
         return;
     }
     m.User
         .findOne({
-            username: req.params.username
+            email: req.params.email
         })
         .select('username email')
         .exec(function(err, user) {

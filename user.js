@@ -33,8 +33,12 @@ function new_(req, res, next) {
 	else {
             req.log.info({user: user}, "New user created");
             res.send(200);
-            mail.verify(user.username, user.email, function() {
-                req.log.info("Sent verification email to " + user.email);
+            mail.verify(user.username, user.email, function(err) {
+                if (err) {
+                    log.error(err);
+                } else {
+                    req.log.info("Sent verification email to " + user.email);
+                }
             });
             return next();
 	}
@@ -143,7 +147,7 @@ function verify(req, res, next) {
             next(new restify.errors.InvalidArgumentError('Verification code invalid'));
             return;
         }
-        if (token.type !== 'verify') {
+        if (token.sub !== 'verify') {
             next(new restify.errors.InvalidArgumentError('Verification code invalid'));
             return;
         }
@@ -178,9 +182,70 @@ function get(req, res, next) {
         });
 }
 
+function forgotPassword(req, res, next) {
+    if (!utils.validateRequest(req, res, next, ['username'])) {
+        return;
+    }
+    m.User
+        .findOne({
+            username: req.params.username
+        })
+        .select('username email')
+        .exec(function(err, user) {
+            if (err) {
+                throw err;
+            } else if (!user) {
+                next(new restify.errors.ResourceNotFoundError('no such username'));
+            } else {
+                mail.forgotPassword(user.username, user.email, function(err) {
+                    if (err) {
+                        throw err;
+                    } else {
+                        res.send(200);
+                    }
+                });
+            }
+        });
+}
+
+function resetPassword(req, res, next) {
+    if (!utils.validateRequest(req, res, next, ['password', 'token'])) {
+        return;
+    }
+    jwt.verify(req.params.token, utils.SECRET, function(err, token) {
+        if (err || req.params.username !== token.username) {
+            next(new restify.errors.InvalidArgumentError('password reset token invalid'));
+            return;
+        }
+        m.User
+            .findOne({
+                username: token.username
+            })
+            .exec(function(err, user) {
+                if (err) {
+                    throw err;
+                } if (!user) {
+                    next(new restify.errors.InvalidArgumentError('password reset token invalid'));
+                } else {
+                    user.password = req.params.password;
+                    user.verified = true;
+                    user.save(function(err, user) {
+                        if (err) {
+                            throw err;
+                        }
+                        log.info({username: user.username}, 'Password reset');
+                        res.send(200);
+                    });
+                }
+            });
+    });
+}
+
 exports.new_ = new_;
 exports.del = del;
 exports.follow = follow;
 exports.verify = verify;
 exports.search = search;
 exports.get = get;
+exports.forgotPassword = forgotPassword;
+exports.resetPassword = resetPassword;

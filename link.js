@@ -2,7 +2,6 @@ var _ = require('underscore');
 var m = require('./mongoose');
 var utils = require('./utils');
 var log = require('bunyan').createLogger({'name': 'wgaf'});
-var jwt = require('jwt-simple');
 var SECRET = utils.SECRET;
 var mail = require('./mail');
 var restify = require('restify');

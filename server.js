@@ -30,6 +30,10 @@ server.pre(function (request, response, next) {
     return next();
 });
 
+// server.pre(function(req, res, next) {
+//     setTimeout(next, 1000);
+// });
+
 server.on('after', function(request, response, route) {
     request.log.debug({res: response}, 'finished');
 });
@@ -59,16 +63,25 @@ server.use(function(request, response, next) {
 
 var jwtAuth = restifyJwt({secret: utils.SECRET});
 
+server.opts('.*', function(req, res, next) {
+    res.send(204);
+});
+
 server.post('/users', user.new_);
 server.get('/users', user.search);
 server.get('/users/:username', user.get);
 server.del('/users/:username', jwtAuth, user.del);
 server.post('/users/:username/following', jwtAuth, user.follow);
 server.get('/users/:username/verify/:verify', user.verify);
+server.post('/users/forgot-password', user.forgotPassword);
+server.post('/users/:username/change-password', user.resetPassword);
+
 server.post('/users/:username/links', jwtAuth, link.new_);
 server.get('/users/:username/links', jwtAuth, link.get);
 server.post('/send_links', jwtAuth, link.sendLinksTest);
+
 server.post('/broadcast', jwtAuth, mail.broadcast);
+
 server.post('/auth', auth.getAccessToken);
 
 var port = Number(process.env.PORT || 7777);

@@ -1,5 +1,4 @@
 var _ = require('underscore');
-var jwt = require('jwt-simple');
 var SECRET = process.env.SECRET || "foobar";
 var API_URL = process.env.API_URL;
 var APP_URL = process.env.APP_URL;

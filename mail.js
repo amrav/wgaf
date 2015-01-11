@@ -1,6 +1,6 @@
 var nodemailer = require('nodemailer');
 var log = require('./utils').log;
-var jwt = require('jwt-simple');
+var jwt = require('jsonwebtoken');
 var utils = require('./utils');
 var m = require('./mongoose');
 
@@ -17,16 +17,16 @@ var smtpTransport = nodemailer.createTransport("SMTP",{
 
 function mail(email, subject, body, cb) {
     var mailOptions = {
-        from: "WGAF <no-reply@mail.wgaf.amrav.net", 
-        to: email, 
-        subject: subject, 
-        html: body 
+        from: "WGAF <no-reply@mail.wgaf.amrav.net",
+        to: email,
+        subject: subject,
+        html: body
     };
     log.info("mail: Sending email to " + email);
     smtpTransport.sendMail(mailOptions, function(error, response){
-        if(error){
-            log.error(error);
-        }else{
+        if (error) {
+            cb(error);
+        } else {
             log.info("Message sent: " + response.message);
             cb();
         }
@@ -35,11 +35,27 @@ function mail(email, subject, body, cb) {
 
 function verify(username, email, cb) {
     log.info("mail.js: Sending verification email");
-    var token = jwt.encode({username: username, type: 'verify'}, utils.SECRET);
+    var token = jwt.encode({username: username}, utils.SECRET, {subject: 'verify'});
     var verifyUrl = utils.API_URL + '/users/' + username + '/verify/' + token;
     var body = '<p>Welcome to WGAF. Please verify your email by going to this link:<br /><a href="' + verifyUrl + '">' + verifyUrl + '</a></p>';
     body += '<p>If you did not sign up for WGAF, please ignore this email. You will not get any further emails from us.</p>';
     mail(email, "Verify your email", body, cb);
+}
+
+function forgotPassword(username, email, cb) {
+    log.info('mail.js: Sending forgot password email');
+    var token = jwt.sign({username: username},
+                         utils.SECRET,
+                         {
+                             subject: 'forgotPassword',
+                             expiresInMinutes: 60
+                         });
+    var forgotUrl = utils.APP_URL + '/@' + username +
+            '/change-password?token=' + token;
+    var body = '<p>Hi ' + username + '. Someone, probably you, asked for your password to be reset. To reset your password, click this link: <a href="' + forgotUrl + '">' + forgotUrl + '</a></p>';
+    body += '<p>If you did not ask to reset your password, please ignore this email.</p>';
+    log.info('Email sent: ' + body);
+    mail(email, 'Password Reset Email', body, cb);
 }
 
 function sendLinks(username, links, email, cb) {
@@ -75,7 +91,7 @@ function broadcast(req, res, next) {
             return;
         }
         utils.asyncForEach(users, function(user, done) {
-            mail(user.email, req.params.subject, req.params.body, function() {
+            mail(user.email, req.params.subject, req.params.body, function(err) {
                 req.log.info("Mailed broadcast: " + user.username);
             });
             done();
@@ -89,3 +105,4 @@ exports.mail = mail;
 exports.verify = verify;
 exports.sendLinks = sendLinks;
 exports.broadcast = broadcast;
+exports.forgotPassword = forgotPassword;

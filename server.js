@@ -44,7 +44,7 @@ server.on('uncaughtException', function(request, response, route, error) {
     response.send(500);
 });
 
-restify.CORS.ALLOW_HEADERS.push('authorization');
+restify.CORS.ALLOW_HEADERS.push('Authorization');
 server.use(restify.CORS());
 server.use(restify.fullResponse());
 server.use(restify.queryParser());

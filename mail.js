@@ -54,8 +54,21 @@ function forgotPassword(username, email, cb) {
             '/change-password?token=' + token;
     var body = '<p>Hi ' + username + ',<br/>Someone, probably you, asked for your password to be reset. To reset your password, click this link: <a href="' + forgotUrl + '">' + forgotUrl + '</a></p>';
     body += '<p>If you did not ask to reset your password, please ignore this email.</p>';
-    log.info('Email sent: ' + body);
     mail(email, 'Password Reset Email', body, cb);
+}
+
+function welcome(username, email, cb) {
+    cb = cb || function(){};
+    log.info('mail.js: Sending welcome message to ' + username);
+    var message = '<p>Hi ' + username + ',</p><p>Welcome to WGAF, and thanks for being an early adopter! This email helps you get started.</p><p>WGAF is a minimal web curation tool. Users save links that they find interesting, and you receive updates from the people you follow, delivered in the form of a daily digest. To follow people, search by username or add them directly if you know their email address.</p><p>Get started by following some of our top users - <a href="https://wgaf.amrav.net/@WhipLash>@WhipLash</a>, <a href=https://wgaf.amrav.net/@bm_700>@bm_700</a> or <a href="https://wgaf.amrav.net/@amrav"">@amrav</a>. Tell people to follow you, and they will get daily updates about the links you\'ve saved.</p><p>WGAF is very young, and new features are being added every week. Our philosophy is to keep the quality of the content you see as high as possible. We\'d love to know how we could make you happier, so please send us feedback by clicking on the link at the bottom of the website!</p><p>Thanks,<br />The WGAF Team</p>';
+    mail(email, 'Getting Started', message, function(err) {
+        if (err) {
+            cb(err);
+        } else {
+            log.info('email sent');
+            cb();
+        }
+    });
 }
 
 function sendLinks(username, links, email, cb) {
@@ -106,3 +119,4 @@ exports.verify = verify;
 exports.sendLinks = sendLinks;
 exports.broadcast = broadcast;
 exports.forgotPassword = forgotPassword;
+exports.welcome = welcome;

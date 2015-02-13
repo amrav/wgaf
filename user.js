@@ -151,16 +151,23 @@ function verify(req, res, next) {
             next(new restify.errors.InvalidArgumentError('Verification code invalid'));
             return;
         }
-        m.User.update(
+        m.User.findOne(
             {username: token.username}, {verified: true},
-            function(err, users) {
+            function(err, user) {
                 if (err) {
                     throw err;
                 }
-                req.log.info({user: token.username}, "Verified email");
-                res.header('Location', utils.APP_URL);
-                res.send(302);
-                return next(false);
+                user.verified = true;
+                user.save(function(err, user) {
+                    if (err) {
+                        throw err;
+                    }
+                    req.log.info({user: token.username}, "Verified email");
+                    res.header('Location', utils.APP_URL);
+                    res.send(302);
+                    mail.welcome(user.username, user.email);
+                    next();
+                });
             });
     });
 }

@@ -35,7 +35,7 @@ function mail(email, subject, body, cb) {
 
 function verify(username, email, cb) {
     log.info("mail.js: Sending verification email");
-    var token = jwt.encode({username: username}, utils.SECRET, {subject: 'verify'});
+    var token = jwt.sign({username: username}, utils.SECRET, {subject: 'verify'});
     var verifyUrl = utils.API_URL + '/users/' + username + '/verify/' + token;
     var body = '<p>Welcome to WGAF. Please verify your email by going to this link:<br /><a href="' + verifyUrl + '">' + verifyUrl + '</a></p>';
     body += '<p>If you did not sign up for WGAF, please ignore this email. You will not get any further emails from us.</p>';
@@ -52,7 +52,7 @@ function forgotPassword(username, email, cb) {
                          });
     var forgotUrl = utils.APP_URL + '/@' + username +
             '/change-password?token=' + token;
-    var body = '<p>Hi ' + username + '. Someone, probably you, asked for your password to be reset. To reset your password, click this link: <a href="' + forgotUrl + '">' + forgotUrl + '</a></p>';
+    var body = '<p>Hi ' + username + ',<br/>Someone, probably you, asked for your password to be reset. To reset your password, click this link: <a href="' + forgotUrl + '">' + forgotUrl + '</a></p>';
     body += '<p>If you did not ask to reset your password, please ignore this email.</p>';
     log.info('Email sent: ' + body);
     mail(email, 'Password Reset Email', body, cb);
